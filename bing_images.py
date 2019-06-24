@@ -1,3 +1,4 @@
+import os
 import queue
 import threading
 from bs4 import BeautifulSoup
@@ -5,7 +6,6 @@ import requests
 from urllib.parse import urljoin
 from logger import Logger
 import traceback
-from tqdm import tqdm
 
 
 class BingImages(object):
@@ -18,6 +18,7 @@ class BingImages(object):
         self.forth_queue = queue.Queue(maxsize=25)
         self.queues = [self.first_queue, self.second_queue, self.third_queue, self.forth_queue]
         self.assign_urls()
+        self.file_path = "E:\\BingImages\\"
 
     def assign_urls(self):
         count = 0
@@ -57,6 +58,7 @@ class BingImages(object):
             collection.add(tag['href'])
 
     def download_images(self, parameter):
+        self.check_file_path()
         thread_name = threading.current_thread().getName()
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -69,6 +71,7 @@ class BingImages(object):
 
         self.logger.info("{} start download images".format(thread_name))
         images_links = set()
+
         while True:
             try:
                 url = parameter.get(True, 20)
@@ -81,11 +84,12 @@ class BingImages(object):
                 BingImages.parser_html(html_data, images_links)
 
                 while len(images_links) > 0:
-                    image_link = urljoin(self.base_url, images_links.pop().split("?")[0] + "?force=download")
-                    images_name = images_links.pop().split("?")[0].split("/")[2]
+                    partial_link = images_links.pop()
+                    image_link = urljoin(self.base_url, partial_link.split("?")[0] + "?force=download")
+                    images_name = partial_link.split("?")[0].split("/")[2]
                     try:
                         with requests.get(url=image_link, headers=headers, stream=True) as req:
-                            with open(r"F:\BingImages\{}{}".format(images_name, ".jpg"), "wb") as f:
+                            with open(r"{}{}{}".format(self.file_path, images_name, ".jpg"), "wb") as f:
                                 for chunk in req.iter_content(1024):
                                     try:
                                         f.write(chunk)
@@ -98,6 +102,13 @@ class BingImages(object):
                         print("open photo page error: ", e_http)
                         with open("error.log", 'a+') as f:
                             f.write("get download links\n" + image_link + "\n" + traceback.format_exc() + "\n\t")
+
+    def check_file_path(self):
+        if os.path.exists(self.file_path):
+            pass
+        else:
+            self.logger.info("directory is not existed, it will be created")
+            os.mkdir(self.file_path)
 
     def start(self):
         for single_queue in self.queues:
@@ -112,14 +123,14 @@ class BingImages(object):
         # print("second_queue: ", self.second_queue.qsize())
         # print("third_queue: ", self.third_queue.qsize())
         # print("forth_queue: ", self.forth_queue.qsize())
-        html = BingImages.open_html("https://bing.ioliu.cn/?p=97")
+        html = BingImages.open_html("https://bing.ioliu.cn/?p=1")
         BingImages.parser_html(html, s)
 
 
 if __name__ == '__main__':
     bing_images = BingImages()
-    # bing_images.test()
-    bing_images.start()
+    bing_images.test()
+    # bing_images.start()
 
 
 
