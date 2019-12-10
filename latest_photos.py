@@ -1,5 +1,7 @@
+import threading
 from urllib.parse import urljoin
 from bing_images import BingImages
+import time
 
 
 class LatestPhotos(BingImages):
@@ -14,7 +16,15 @@ class LatestPhotos(BingImages):
 
 if __name__ == '__main__':
     latest_photos = LatestPhotos()
+    startTime = time.time()
     latest_photos.start()
+    while True:
+        if threading.active_count() == 1:
+            d_time = time.time() - startTime
+            print("==============================")
+            print("+++DuringTime: %.2fs" % d_time)
+            break
+
 
 
 

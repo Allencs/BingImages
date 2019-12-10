@@ -1,3 +1,5 @@
+import time
+
 from gevent import monkey; monkey.patch_all()
 import gevent
 from urllib.parse import urljoin
@@ -21,8 +23,11 @@ class LatestPhotos(BingImages):
 
 if __name__ == '__main__':
     latest_photos = LatestPhotos()
+    startTime = time.time()
     latest_photos.start()
-
+    d_time = time.time() - startTime
+    print("==============================")
+    print("+++DuringTime: %.2fs" % d_time)
 
 
 
